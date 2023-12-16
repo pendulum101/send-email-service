@@ -20,6 +20,9 @@ public class EmailController {
 
     public ResponseEntity handlePost(@Validated @RequestBody EmailDTO email) {
         //TODO parse multiple emails and create/update their DB values
+        //TODO save the new emails
+        //TODO call backend service with refined list of Emails to send to
+
         EmailDTO savedEmail = emailService.saveNewEmail(email);
 
         return new ResponseEntity(HttpStatus.CREATED);

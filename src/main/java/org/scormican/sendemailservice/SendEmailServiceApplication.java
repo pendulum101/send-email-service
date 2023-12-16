@@ -12,14 +12,13 @@ public class SendEmailServiceApplication {
 
 }
 
-//TODO Controller
 //TODO Repository
 //TODO Services
 //TODO model
 //TODO entities
 //TODO invalid email
 //TODO Configure DB
-
+//TODO
 //TODO send single email
 
 //TODO unit testing

@@ -8,6 +8,5 @@ import org.scormican.sendemailservice.model.EmailDTO;
 public interface EmailService {
     EmailDTO saveNewEmail(EmailDTO email);
     Optional<EmailDTO> updateEmail(String address, EmailDTO emailDTO);
-    List<EmailDTO> getAllEmails();
-
+    List<EmailDTO> findByEmailIn(List<String> emailList);
 }
