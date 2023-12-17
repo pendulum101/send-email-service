@@ -11,20 +11,3 @@ public class SendEmailServiceApplication {
 	}
 
 }
-
-//TODO Repository
-//TODO Services
-//TODO model
-//TODO entities
-//TODO invalid email
-//TODO Configure DB
-//TODO
-//TODO send single email
-
-//TODO unit testing
-//TODO import template
-
-//TODO Store configuration for Breva
-
-//TODO javadoc generation
-//TODO README.MD
