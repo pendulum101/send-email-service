@@ -33,7 +33,7 @@ public class Email {
     @Id
     @NotNull
     @NotBlank
-    @Column(columnDefinition = "nvarchar(255)", updatable = false)
+    @Column(columnDefinition = "nvarchar(320)", updatable = false)
     private String emailAddr;
 
     @Version

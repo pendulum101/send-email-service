@@ -35,22 +35,22 @@ class EmailControllerTest {
     @MockBean
     EmailService emailService;
 
-    DummyEmailServiceImpl dummyEmailServiceImpl;
+    FakeEmailServiceImpl fakeEmailServiceImpl;
 
     @BeforeEach
     void setUp() {
-        dummyEmailServiceImpl = new DummyEmailServiceImpl();
+        fakeEmailServiceImpl = new FakeEmailServiceImpl();
     }
 
     @Test
     void testSendEmail() throws Exception {
         EmailDTO emailDTO = EmailDTO.builder()
-            .emailAddr(DummyEmailServiceImpl.RECENT_EMAIL)
+            .emailAddr(FakeEmailServiceImpl.RECENT_EMAIL)
             .build();
         List<EmailDTO> emailDtoList = Arrays.asList(emailDTO);
 
         given(emailService.sendEmailsAndUpdateDB(any(List.class)))
-            .willReturn(dummyEmailServiceImpl.sendEmailsAndUpdateDB(emailDtoList));
+            .willReturn(fakeEmailServiceImpl.sendEmailsAndUpdateDB(emailDtoList));
 
         MvcResult mvcResult = mockMvc.perform(post(EmailController.API_PATH)
                 .accept(MediaType.APPLICATION_JSON)
@@ -62,14 +62,35 @@ class EmailControllerTest {
     }
 
     @Test
-    void testSendEmailInvalid() throws Exception {
+    void testSendEmailBlank() throws Exception {
         EmailDTO emailDTO = EmailDTO.builder()
             .emailAddr("")
+            .build();
+        EmailDTO emailDTO2 = EmailDTO.builder()
+            .emailAddr(TEST_EMAIL_ADDR)
+            .build();
+        List<EmailDTO> listdto = Arrays.asList(emailDTO, emailDTO2);
+
+        given(emailService.sendEmailsAndUpdateDB(any(List.class)))
+            .willReturn(fakeEmailServiceImpl.sendEmailsAndUpdateDB(listdto));
+
+        MvcResult mvcResult = mockMvc.perform(post(EmailController.API_PATH)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(listdto)))
+            .andExpect(status().isBadRequest())
+            .andReturn();
+    }
+
+    @Test
+    void testSendEmailInvalidFormat() throws Exception {
+        EmailDTO emailDTO = EmailDTO.builder()
+            .emailAddr("not_an_email@ ")
             .build();
         List<EmailDTO> listdto = Arrays.asList(emailDTO);
 
         given(emailService.sendEmailsAndUpdateDB(any(List.class)))
-            .willReturn(dummyEmailServiceImpl.sendEmailsAndUpdateDB(listdto));
+            .willReturn(fakeEmailServiceImpl.sendEmailsAndUpdateDB(listdto));
 
         MvcResult mvcResult = mockMvc.perform(post(EmailController.API_PATH)
                 .accept(MediaType.APPLICATION_JSON)

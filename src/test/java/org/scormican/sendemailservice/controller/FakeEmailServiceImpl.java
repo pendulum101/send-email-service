@@ -8,13 +8,13 @@ import java.util.UUID;
 import org.scormican.sendemailservice.model.EmailDTO;
 import org.scormican.sendemailservice.services.EmailService;
 
-public class DummyEmailServiceImpl implements EmailService {
+public class FakeEmailServiceImpl implements EmailService {
 
     public static final String RECENT_EMAIL = "recent@mail.com";
     public static final String CAN_SEND_AGAIN_EMAIL = "canSendAgain@mail.com";
     private Map<UUID, EmailDTO> emailMap;
 
-    public DummyEmailServiceImpl() {
+    public FakeEmailServiceImpl() {
         this.emailMap = new HashMap<>();
 
         EmailDTO email1 = EmailDTO.builder()
@@ -35,11 +35,6 @@ public class DummyEmailServiceImpl implements EmailService {
         emailMap.put(email2.getId(), email2);
     }
 
-
-    /**
-     * @param emailDTO 
-     * @return
-     */
     @Override
     public List<EmailDTO> sendEmailsAndUpdateDB(List<EmailDTO> emailDTO) {
         return emailMap.values().stream().toList();

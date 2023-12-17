@@ -8,5 +8,5 @@ public interface EmailService {
 //    EmailDTO updateExistingEmail(String emailAddr);
 //    List<EmailDTO> getExistingEmailAddresses(List<String> emailAddrs);
 
-    List<EmailDTO> sendEmailsAndUpdateDB(List<EmailDTO> emailDTO);
+    List<EmailDTO> sendEmailsAndUpdateDB(List<EmailDTO> emailDTOList);
 }
