@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -25,15 +26,16 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Email {
+    @Id
     @UuidGenerator
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(length = 36, columnDefinition = "varchar(36)", updatable = false)
     private UUID id;
 
-    @Id
     @NotNull
     @NotBlank
-    @Column(columnDefinition = "nvarchar(320)", updatable = false)
+    @Pattern(regexp="^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]{1,64}@[a-zA-Z0-9.-]{1,254}$")
+    @Column(columnDefinition = "nvarchar(320)", nullable = false, updatable = false)
     private String emailAddr;
 
     @Version

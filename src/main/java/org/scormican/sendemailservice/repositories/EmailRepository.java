@@ -6,5 +6,5 @@ import org.scormican.sendemailservice.entities.Email;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EmailRepository extends JpaRepository<Email, UUID> {
-      List<Email> findAllByEmailAddrIgnoreCaseIn(List<String> emailAddrs);
+    List<Email> findAllByEmailAddrIgnoreCaseIn(List<String> emailAddrs);
 }

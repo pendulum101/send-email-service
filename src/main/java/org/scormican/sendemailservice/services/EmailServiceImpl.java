@@ -1,17 +1,24 @@
 package org.scormican.sendemailservice.services;
 
+import com.sendgrid.Method;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
+import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.scormican.sendemailservice.controller.BackendEmailServiceFailureException;
 import org.scormican.sendemailservice.entities.Email;
 import org.scormican.sendemailservice.mappers.EmailMapper;
 import org.scormican.sendemailservice.model.EmailDTO;
 import org.scormican.sendemailservice.repositories.EmailRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -20,15 +27,15 @@ import org.springframework.stereotype.Service;
 public class EmailServiceImpl implements EmailService {
 
     public static final int COOL_OFF_MINS = 5;
+
+    @Value("${sendgrid.api.key}")
+    private String apiKey;
+
     private final EmailMapper emailMapper;
     private final EmailRepository emailRepository;
 
     @Override
     public List<EmailDTO> sendEmailsAndUpdateDB(List<EmailDTO> emailDTOList) {
-        if (emailDTOList.isEmpty()) {
-            return null;
-            //TODO 404 or 400 error if any email is invalid
-        }
         List<EmailDTO> existingEmailAddresses = getExistingEmailAddresses(emailDTOList);
         List<EmailDTO> newEmailsToAddAndSend = removeExistingEmails(emailDTOList, existingEmailAddresses);
 
@@ -36,18 +43,43 @@ public class EmailServiceImpl implements EmailService {
             .filter(dto -> dto.getSendDate().isBefore(LocalDateTime.now().minusMinutes(COOL_OFF_MINS)))
             .toList();
 
-        //TODO handle case where there is no update to make currently responds with a 500
-        List<EmailDTO> combinedList = Stream.concat(saveNewEmail(newEmailsToAddAndSend).stream(),
-            updateExistingEmail(existingEmailsToUpdateAndSend).stream()).toList();
-
-        sendEmails(combinedList);
-        //TODO return something to determine the response code 201 vs. 404 boolean?
-        return combinedList;
+        List<EmailDTO> emailsToSave = Stream.concat(newEmailsToAddAndSend.stream(),
+            existingEmailsToUpdateAndSend.stream()).toList();
+        List<EmailDTO> savedEmails = saveEmails(emailsToSave);
+        sendEmails(savedEmails);
+        return savedEmails;
     }
 
     private void sendEmails(List<EmailDTO> combinedList) {
-        //TODO call backend service with refined list of Emails to send to
+        for (EmailDTO dto : combinedList) {
+            Mail mail = getMail(dto);
 
+            SendGrid sg = new SendGrid(apiKey);
+            Request request = new Request();
+            try {
+                request.setMethod(Method.POST);
+                request.setEndpoint("mail/send");
+                request.setBody(mail.build());
+                Response response = sg.api(request);
+                System.out.println(response.getStatusCode());
+                System.out.println(response.getBody());
+                System.out.println(response.getHeaders());
+            } catch (IOException ex) {
+                log.error("Failed to send request to the email service", ex);
+                throw new BackendEmailServiceFailureException(dto.getEmailAddr());
+            }
+        }
+    }
+
+    private Mail getMail(EmailDTO dto) {
+        com.sendgrid.helpers.mail.objects.Email from = new com.sendgrid.helpers.mail.objects.Email(
+            "noreply@test.com");
+        String subject = "Email Sending Assignment";
+        com.sendgrid.helpers.mail.objects.Email to = new com.sendgrid.helpers.mail.objects.Email(
+            dto.getEmailAddr());
+        Content content = new Content("text/plain",
+            "You have just received an email from Sean as part of the Email Sending Assessment development");
+        return new Mail(from, subject, to, content);
     }
 
     private List<EmailDTO> removeExistingEmails(List<EmailDTO> emailDTOList, List<EmailDTO> existingEmailAddresses) {
@@ -56,12 +88,7 @@ public class EmailServiceImpl implements EmailService {
             .filter(dto -> !emailsToRemove.contains(dto.getEmailAddr())).toList();
     }
 
-    private List<EmailDTO> saveNewEmail(List<EmailDTO> emailDTO) {
-        List<Email> emailEntities = emailDTO.stream().map(emailMapper::emailDtoToEmail).toList();
-        return emailRepository.saveAll(emailEntities).stream().map(emailMapper::emailToEmailDto).toList();
-    }
-
-    private List<EmailDTO> updateExistingEmail(List<EmailDTO> emailDTO) {
+    private List<EmailDTO> saveEmails(List<EmailDTO> emailDTO) {
         List<Email> emailEntities = emailDTO.stream().map(emailMapper::emailDtoToEmail).toList();
         for(Email e : emailEntities) {
             e.setSendDate(LocalDateTime.now());
@@ -74,14 +101,6 @@ public class EmailServiceImpl implements EmailService {
         List<Email> emails = emailRepository.findAllByEmailAddrIgnoreCaseIn(emailAddrs);
         return emails.stream().map(emailMapper::emailToEmailDto).collect(Collectors.toList());
     }
-
-//TODO connect to email service
-//TODO send single email
-
-//TODO unit testing
-
-//TODO Store configuration for Breva
-
 //TODO javadoc generation
-//TODO README.MD
+//TODO README.MD with API info
 }

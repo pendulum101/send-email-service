@@ -1,16 +1,18 @@
 package org.scormican.sendemailservice.controller;
 
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.ConstraintViolation;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.scormican.sendemailservice.model.EmailDTO;
@@ -21,6 +23,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 @WebMvcTest(EmailController.class)
 class EmailControllerTest {
@@ -36,6 +40,12 @@ class EmailControllerTest {
     EmailService emailService;
 
     FakeEmailServiceImpl fakeEmailServiceImpl;
+
+    @Autowired
+    private LocalValidatorFactoryBean validator;
+
+    public final String VALID_EMAIL = "test@mail.com";
+    public final String INVALID_EMAIL = "test";
 
     @BeforeEach
     void setUp() {
@@ -78,7 +88,7 @@ class EmailControllerTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(listdto)))
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isNotFound())
             .andReturn();
     }
 
@@ -96,7 +106,42 @@ class EmailControllerTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(listdto)))
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isNotFound())
             .andReturn();
+    }
+
+    @Test
+    void testThrowNotFoundHTTPException() throws Exception {
+        List<EmailDTO> listdto = new ArrayList<>();
+
+        given(emailService.sendEmailsAndUpdateDB(any(List.class)))
+            .willThrow(HandlerMethodValidationException.class);
+
+        mockMvc.perform(post(EmailController.API_PATH)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(listdto)))
+            .andExpect(status().isNotFound())
+            .andReturn();
+    }
+
+    @Test
+    public void testValidationValid() {
+        EmailDTO dto = EmailDTO.builder()
+            .emailAddr(VALID_EMAIL).build();
+
+        Set<ConstraintViolation<EmailDTO>> violations = validator.validate(dto);
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    public void testValidationInvalid() {
+        EmailDTO dto = EmailDTO.builder()
+            .emailAddr(INVALID_EMAIL).build();
+
+        Set<ConstraintViolation<EmailDTO>> violations = validator.validate(dto);
+        List<ConstraintViolation<EmailDTO>> list = violations.stream().toList();
+        assertThat(list.get(0).getInvalidValue()).isEqualTo(INVALID_EMAIL);
     }
 }
