@@ -26,6 +26,7 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Email {
+
     @Id
     @UuidGenerator
     @JdbcTypeCode(SqlTypes.CHAR)
@@ -34,7 +35,7 @@ public class Email {
 
     @NotNull
     @NotBlank
-    @Pattern(regexp="^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]{1,64}@[a-zA-Z0-9.-]{1,254}$")
+    @Pattern(regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]{1,64}@[a-zA-Z0-9.-]{1,254}$")
     @Column(columnDefinition = "nvarchar(320)", nullable = false, updatable = false)
     private String emailAddr;
 

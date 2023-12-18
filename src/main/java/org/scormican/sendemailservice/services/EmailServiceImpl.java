@@ -3,7 +3,6 @@ package org.scormican.sendemailservice.services;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
-import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import java.io.IOException;
@@ -18,7 +17,6 @@ import org.scormican.sendemailservice.entities.Email;
 import org.scormican.sendemailservice.mappers.EmailMapper;
 import org.scormican.sendemailservice.model.EmailDTO;
 import org.scormican.sendemailservice.repositories.EmailRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -28,12 +26,13 @@ public class EmailServiceImpl implements EmailService {
 
     public static final int COOL_OFF_MINS = 5;
 
-    @Value("${sendgrid.api.key}")
-    private String apiKey;
-
     private final EmailMapper emailMapper;
     private final EmailRepository emailRepository;
+    private final SendService sendService;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<EmailDTO> sendEmailsAndUpdateDB(List<EmailDTO> emailDTOList) {
         List<EmailDTO> existingEmailAddresses = getExistingEmailAddresses(emailDTOList);
@@ -53,20 +52,19 @@ public class EmailServiceImpl implements EmailService {
     private void sendEmails(List<EmailDTO> combinedList) {
         for (EmailDTO dto : combinedList) {
             Mail mail = getMail(dto);
-
-            SendGrid sg = new SendGrid(apiKey);
             Request request = new Request();
+
             try {
                 request.setMethod(Method.POST);
                 request.setEndpoint("mail/send");
                 request.setBody(mail.build());
-                Response response = sg.api(request);
+                Response response = sendService.api(request);
                 System.out.println(response.getStatusCode());
                 System.out.println(response.getBody());
                 System.out.println(response.getHeaders());
             } catch (IOException ex) {
                 log.error("Failed to send request to the email service", ex);
-                throw new BackendEmailServiceFailureException(dto.getEmailAddr());
+                throw new BackendEmailServiceFailureException();
             }
         }
     }
@@ -90,7 +88,7 @@ public class EmailServiceImpl implements EmailService {
 
     private List<EmailDTO> saveEmails(List<EmailDTO> emailDTO) {
         List<Email> emailEntities = emailDTO.stream().map(emailMapper::emailDtoToEmail).toList();
-        for(Email e : emailEntities) {
+        for (Email e : emailEntities) {
             e.setSendDate(LocalDateTime.now());
         }
         return emailRepository.saveAll(emailEntities).stream().map(emailMapper::emailToEmailDto).toList();
@@ -101,6 +99,4 @@ public class EmailServiceImpl implements EmailService {
         List<Email> emails = emailRepository.findAllByEmailAddrIgnoreCaseIn(emailAddrs);
         return emails.stream().map(emailMapper::emailToEmailDto).collect(Collectors.toList());
     }
-//TODO javadoc generation
-//TODO README.MD with API info
 }

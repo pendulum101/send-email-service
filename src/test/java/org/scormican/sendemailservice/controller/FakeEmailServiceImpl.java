@@ -12,7 +12,7 @@ public class FakeEmailServiceImpl implements EmailService {
 
     public static final String RECENT_EMAIL = "recent@mail.com";
     public static final String CAN_SEND_AGAIN_EMAIL = "canSendAgain@mail.com";
-    private Map<UUID, EmailDTO> emailMap;
+    private final Map<UUID, EmailDTO> emailMap;
 
     public FakeEmailServiceImpl() {
         this.emailMap = new HashMap<>();

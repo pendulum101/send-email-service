@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.ConstraintViolation;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,7 +58,7 @@ class EmailControllerTest {
         EmailDTO emailDTO = EmailDTO.builder()
             .emailAddr(FakeEmailServiceImpl.RECENT_EMAIL)
             .build();
-        List<EmailDTO> emailDtoList = Arrays.asList(emailDTO);
+        List<EmailDTO> emailDtoList = Collections.singletonList(emailDTO);
 
         given(emailService.sendEmailsAndUpdateDB(any(List.class)))
             .willReturn(fakeEmailServiceImpl.sendEmailsAndUpdateDB(emailDtoList));
@@ -97,7 +98,7 @@ class EmailControllerTest {
         EmailDTO emailDTO = EmailDTO.builder()
             .emailAddr("not_an_email@ ")
             .build();
-        List<EmailDTO> listdto = Arrays.asList(emailDTO);
+        List<EmailDTO> listdto = Collections.singletonList(emailDTO);
 
         given(emailService.sendEmailsAndUpdateDB(any(List.class)))
             .willReturn(fakeEmailServiceImpl.sendEmailsAndUpdateDB(listdto));

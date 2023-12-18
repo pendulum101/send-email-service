@@ -21,10 +21,18 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 @RequiredArgsConstructor
 @RestController
 public class EmailController {
+
     public static final String API_PATH = "/api/v1/sendemail";
     public static final String ERROR_MSG = "You entered an incorrectly formatted email, Please try again";
+    public static final String EMAIL_SERVICE_NOT_FOUND = "Unable to send request to the email service";
     private final EmailService emailService;
 
+    /**
+     * Handles POST request for sending emails and updating the database.
+     *
+     * @param addresses the list of EmailDTO objects to be processed
+     * @return a ResponseEntity object representing the HTTP response
+     */
     @PostMapping(API_PATH)
     public ResponseEntity handlePost(@RequestBody @Valid List<EmailDTO> addresses) {
 
@@ -43,14 +51,25 @@ public class EmailController {
     }
 
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    /**
+     * Handles validation exceptions thrown during the handling of HTTP requests.
+     * Catches: HandlerMethodValidationException and ConstraintViolationException.
+     *
+     * @return a ResponseEntity object representing the HTTP response 404 (Not Found)
+     */
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler({HandlerMethodValidationException.class, ConstraintViolationException.class})
     public ResponseEntity handleValidationExceptions() {
-        return new ResponseEntity<>("You entered an incorrectly formatted email, Please try again", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(ERROR_MSG, HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * Handles the exception thrown when an api call to the backend email sending service fails.
+     *
+     * @return a ResponseEntity object representing the HTTP response 404 (Not Found)
+     */
     @ExceptionHandler(BackendEmailServiceFailureException.class)
     public ResponseEntity handleBackendEmailServiceFailure() {
-        return new ResponseEntity<>("Unable to send request to the email service", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(EMAIL_SERVICE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 }

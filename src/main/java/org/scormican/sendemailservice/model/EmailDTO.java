@@ -11,12 +11,13 @@ import lombok.Data;
 @Builder
 @Data
 public class EmailDTO {
+
     private UUID id;
     private Integer version;
 
     @NotBlank
     @NotNull
-    @Pattern(regexp="^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]{1,64}@[a-zA-Z0-9.-]{1,254}$")
+    @Pattern(regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]{1,64}@[a-zA-Z0-9.-]{1,254}$")
     private String emailAddr;
 
     private LocalDateTime sendDate;
